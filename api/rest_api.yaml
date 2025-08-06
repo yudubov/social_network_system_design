@@ -1,0 +1,1587 @@
+openapi: 3.0.0
+
+info:
+  title: T🌍SI B🌎SI URL API 
+  description: |
+    API социальной сети путешественников "Tosi bosi" для курса по System Design Balun.Course
+    
+  
+    - Токен передается по email ответственному лицу в одноразовых записках privnote.com. 
+    - Уровень защиты низкий. В будущем панируется реализовать авторизацию по протоколу OAuth 2.0
+  contact:
+    name: Курс по System Design Balun.Cours
+    url: https://balun.courses/courses/system_design#program
+    
+  version: 1.0.0
+tags:
+  - name: Управление постами 
+  - name: Управление комментариями
+  - name: Управление оценками
+  - name: Управление подписками/отписками
+
+paths:
+  '/v1/post':
+    post:
+      summary: Создание одного поста
+      operationId: СreatePost
+      description:  |
+        Метод создает `один` пост пользователя.
+        
+        Пользователь может публиковать не более `20` своих постов в день. 
+        
+        Описание не должно превышать `250` символов     
+      tags:
+        - Управление постами
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+      
+              type: object
+              'properties':
+                author_user_id:
+                  type: string
+                  format: UUID
+                  description: id автора поста (UUID)
+                title:
+                  type: string
+                  description: Название поста (заголовок). Максимум `100` символов  
+                comment:
+                  type: string
+                  description: Комментарий/описание к посту. Описание не должно превышать `250` символов.
+                city:
+                    type: string
+                    description: Значение города из справочника "city"
+                    enum:
+                        - Лахденпохья
+                        - Москва
+                        - Минск
+                        - Самара
+                        - Астана
+                country:
+                    type: string
+                    description: Значение города из справочника "country"
+                    enum:
+                        - Россия
+                        - Казахстан
+                        - Киргизия
+                        - Таджикистан
+                        - Беларусь
+                hashtag:
+                  type: array
+                  items:
+                    type: string
+                    description: Список хештегов
+                created_at:  
+                  type: string
+                  format: date-time
+                  description: Дата и время создания поста
+              
+              required:
+                - author_user_id
+                - title
+                - comment
+                - city
+                - country
+                - created_at
+               
+            'examples':
+              request:
+                value:
+                  author_user_id: "b6f641de-0067-4c74-a78a-8b03171aeaca"
+                  title: "Первый день в Карелии"
+                  comment: "Посетил горный массив Воттоваара. Подъём на священную саамскую гору требует хорошей физической подготовки, но открывающиеся виды компенсируют усилия"
+                  city: "Лахденпохья"
+                  country_id: "Россия"
+                  hashtag: ["#Карелия", "#Воттоваара"]
+                  created_at: "2024-05-21T13:09:12Z"
+                  
+      'responses':
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  post_id:
+                    type: string
+                    format: UUID
+                    description: id созданного поста (UUID)
+                required:
+                  - post_id
+              examples:
+                response:
+                  value:
+                    post_id: "6b179778-439d-4415-ba1c-fdd114c3c38a"
+        '404':
+          description: Автор с указанным идентификатором не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  - parameter
+              examples:
+                response:
+                  value:
+                    message: "Автор с указанным идентификатором не найден"
+                    parametr: "author_user_id"
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  - parameter
+              examples:
+                response:
+                  value:
+                    message: "Превышен лимит комментария 250 символов"
+                    parametr: "comment"
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                required:
+                  - message
+
+              examples:
+                response:
+                  value:
+                    message: "Внутренняя ошибка сервера"
+                  
+                   
+  '/v1/upload/photos':
+     post:
+      summary: Загрузка фотографий в пост пользователя
+      operationId: UploadPhotos
+      description:  |
+        Метод загружает до `6` фото в `один` пост пользователя.
+        
+        Максимальным размером одной фотографии `500Кб` 
+        
+      tags:
+        - Управление постами
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+      
+              type: object
+              'properties':
+                author_user_id:
+                  type: string
+                  format: UUID
+                  description: id автора поста (UUID)
+                post_id:
+                    type: string
+                    format: UUID
+                    description: id поста, в который загружаются фото (UUID)
+                link_1_photo:
+                    type: string
+                    description: URL изображения 
+                link_2_photo:
+                    type: string
+                    description: URL изображения 
+                link_3_photo:
+                    type: string
+                    description: URL изображения 
+                link_4_photo:
+                    type: string
+                    description: URL изображения 
+                link_5_photo:
+                    type: string
+                    description: URL изображения 
+                link_6_photo:
+                    type: string
+                    description: URL изображения 
+                created_at:  
+                  type: string
+                  format: date-time
+                  description: Дата и время загрузки фото
+                  
+              required:
+                - author_user_id
+                - post_id
+                - link_1_photo
+                - created_at
+               
+            'examples':
+              request:
+                value:
+                  author_user_id: "b6f641de-0067-4c74-a78a-8b03171aeaca"
+                  post_id: "6b179778-439d-4415-ba1c-fdd114c3c38a"
+                  link_1_photo: "https://tosi-bosi-bucket.s3c2.001.cloud.ru"
+                  link_2_photo: "https://tosi-bosi-bucket.s3c2.002.cloud.ru"
+                  link_3_photo: "https://tosi-bosi-bucket.s3c2.003.cloud.ru"
+                  link_4_photo: "https://tosi-bosi-bucket.s3c2.004.cloud.ru"
+                  link_5_photo: "https://tosi-bosi-bucket.s3c2.005.cloud.ru"
+                  link_6_photo: "https://tosi-bosi-bucket.s3c2.006.cloud.ru"
+                  created_at: "2024-05-23T11:19:11Z"
+                  
+      'responses':
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  post_id:
+                    type: string
+                    format: UUID
+                    description: id поста, в который были загружены фото (UUID)
+                required:
+                  - post_id
+              examples:
+                response:
+                  value:
+                    post_id: "6b179778-439d-4415-ba1c-fdd114c3c38a"
+        '404':
+          description: Автор с указанным идентификатором не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  - parameter
+              examples:
+                response:
+                  value:
+                    message: "Автор с указанным идентификатором не найден"
+                    parametr: "author_user_id"
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  - parameter
+              examples:
+                response:
+                  value:
+                    message: "Превышен лимит размера фото 500Кб"
+                    parametr: "comment"
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                required:
+                  - message
+
+              examples:
+                response:
+                  value:
+                    message: "Внутренняя ошибка сервера"
+
+
+  '/v1/posts':
+    get:
+      operationId: ListPosts
+      description:  |
+        Пользователь может просматривать не более `2000` постов в день
+        
+      tags:
+        - Управление постами
+      summary: Возвращает список постов по заданным фильтрам.
+      parameters:
+        - name: author_user_id
+          in: query
+          description: Фильтр для поиска постов по id пользователей
+          required: false
+          schema:
+            type: string
+            format: uuid
+          example: b6f641de-0067-4c74-a78a-8b03171aeaca
+          
+        - name: post_id
+          in: query
+          description: Фильтр для поиска постов по id постов
+          required: false
+          schema:
+            type: string
+            format: uuid
+          example: 712d9b72-cd1a-42f0-bb7f-e319cde98849
+
+        - name: country
+          in: query
+          description: Перечень запрашиваемых стран для фильтрации постов
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - Россия
+                - Казахстан
+                - Киргизия
+                - Таджикистан
+                - Беларусь
+         
+        - name: city
+          in: query
+          description: Перечень запрашиваемых городов для фильтрации постов
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                 - Лахденпохья
+                 - Москва
+                 - Минск
+                 - Самара
+                 - Астана
+            
+        - name: limit
+          in: query
+          description: Максимальное количество записей, которое нужно получить в ответе
+          required: true
+          schema:
+            type: integer
+            default: 10
+            example: 100
+          
+        - name: page
+          in: query
+          description: Номер страницы пагинации. Опциональный параметр. По умолчанию 1.
+          schema:
+            type: integer
+            format: int32
+            default: 1
+            minimum: 1
+        
+      
+      'responses':
+        '200':
+          description: Список постов успешно получен
+          content:
+            application/json:
+              schema:
+                   $ref: '#/components/schemas/GetPostsView'
+              
+        '404':
+          description: Автор с указанным идентификатором не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  - parameter
+              examples:
+                response:
+                  value:
+                    message: "Автор с указанным идентификатором не найден"
+                    parametr: "author_user_id"
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  - parameter
+              examples:
+                response:
+                  value:
+                    message: "Некорректный id поста в запросе "
+                    parametr: "post_id"
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                required:
+                  - message
+
+              examples:
+                response:
+                  value:
+                    message: "Внутренняя ошибка сервера"
+  
+  
+  
+  
+  '/v1/comment':
+    post:
+      summary: Создание одного комментария к посту
+      operationId: CreateComment
+      description:  |
+        Пользователь может писать не более `500` комментариев в день к другим постам 
+        
+        Комментарий не должен превышать `500` символов
+      tags:
+        -  Управление комментариями
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+      
+              type: object
+              'properties':
+                author_user_id:
+                  type: string
+                  format: UUID
+                  description: id автора поста (UUID)
+                post_id:
+                  type: string
+                  format: UUID
+                  description: id поста (UUID)   
+                commentator_user_id:
+                  type: string
+                  format: UUID
+                  description: id комментотаро поста (UUID) 
+                comment:
+                  type: string
+                  description: Комментарий к посту. Описание не должно превышать `500` символов.
+                comment_status:
+                    type: string
+                    description: Значение статуса комментария из справочника "comment_statuses"
+                    enum:
+                        - new
+                        - viewed
+                created_at:  
+                  type: string
+                  format: date-time
+                  description: Дата и время создания комментария
+                  
+              required:
+                - author_user_id
+                - post_id
+                - comment
+                - commentator_user_id
+                - comment_status
+                - created_at
+               
+            'examples':
+              request:
+                value:
+                  author_user_id: "b6f641de-0067-4c74-a78a-8b03171aeaca"
+                  post_id: "1ceae90a-fb91-43c1-90a0-246638c2dbae"
+                  commentator_user_id: "a3de7b75-185f-4912-a40c-19b8ae443c99"
+                  comment: "Весьма атмосферно. Ваше путешествие меня вдохновляет"
+                  status: "new"
+                  created_at: "2024-05-21T13:09:12Z"
+                  
+      'responses':
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comment_id:
+                    type: string
+                    format: UUID
+                    description: id созданного комментария (UUID)
+                required:
+                  - comment_id
+              examples:
+                response:
+                  value:
+                    comment_id: "6b179778-439d-4415-ba1c-fdd114c3c38a"
+        '404':
+          description: Автор с указанным идентификатором не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  - parameter
+              examples:
+                response:
+                  value:
+                    message: "Пост с указанным идентификатором не найден"
+                    parametr: "post_id"
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  - parameter
+              examples:
+                response:
+                  value:
+                    message: "Превышен лимит комментария 500 символов"
+                    parametr: "comment"
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                required:
+                  - message
+
+              examples:
+                response:
+                  value:
+                    message: "Внутренняя ошибка сервера"
+  
+  
+  '/v1/comments':
+    get:
+      operationId: ListComments
+      description:  |
+        Пользователь может просматривать не более `2000` комментариев других пользователей в день
+        
+      tags:
+        - Управление комментариями
+      summary: Возвращает список комментариев по заданным фильтрам.
+      parameters:
+        - name: author_user_id
+          in: query
+          description: Фильтр для поиска комментариев по id авторов поста
+          required: false
+          schema:
+            type: string
+            format: uuid
+          example: b6f641de-0067-4c74-a78a-8b03171aeaca
+          
+        - name: post_id
+          in: query
+          description: Фильтр для поиска комментариев по id постов
+          required: false
+          schema:
+            type: string
+            format: uuid
+          example: 712d9b72-cd1a-42f0-bb7f-e319cde98849
+        
+        - name: commentator_user_id
+          in: query
+          description: Фильтр для поиска комментариев по id комментаторов постов
+          required: false
+          schema:
+            type: string
+            format: uuid
+            example: 712d9b72-cd1a-42f0-bb7f-e319cde98849    
+          
+        - name: comment_status
+          in: query
+          description: Фильтрация по статусам комментариев
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - viewed
+                - read
+         
+        - name: limit
+          in: query
+          description: Максимальное количество записей, которое нужно получить в ответе
+          required: true
+          schema:
+            type: integer
+            default: 10
+            example: 100
+            
+        - name: page
+          in: query
+          description: Номер страницы пагинации. Опциональный параметр. По умолчанию 1.
+          schema:
+            type: integer
+            format: int32
+            default: 1
+            minimum: 1
+        
+      
+      'responses':
+        '200':
+          description: Список комментариев успешно получен
+          content:
+            application/json:
+              schema:
+                   $ref: '#/components/schemas/GetCommentsView'
+              
+        '404':
+          description: Автор с указанным идентификатором не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  - parameter
+              examples:
+                response:
+                  value:
+                    message: "Автор с указанным идентификатором не найден"
+                    parametr: "author_user_id"
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  - parameter
+              examples:
+                response:
+                  value:
+                    message: "Некорректный id поста в запросе "
+                    parametr: "post_id"
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                required:
+                  - message
+
+              examples:
+                response:
+                  value:
+                    message: "Внутренняя ошибка сервера"
+  
+  
+  
+  
+  
+  '/v1/rating':
+    post:
+      summary: Оценка одного поста
+      operationId: CreateRating
+      description:  |
+        Пользователь может оценивать не более `500` постов в день
+      tags:
+        -  Управление оценками
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+      
+              type: object
+              'properties':
+                author_user_id:
+                  type: string
+                  format: UUID
+                  description: id автора поста (UUID)
+                post_id:
+                  type: string
+                  format: UUID
+                  description: id поста (UUID)   
+                commentator_user_id:
+                  type: string
+                  format: UUID
+                  description: id комментатора поста (UUID) 
+                rating:
+                  type: integer
+                  description: Оценка поста
+                  minLength: 1
+                  maxLength: 5
+                rating_status:
+                    type: string
+                    description: Значение статуса комментария из справочника "rating_statuses"
+                    enum:
+                        - new
+                        - viewed
+                created_at:  
+                  type: string
+                  format: date-time
+                  description: Дата и время создания оценки
+                  
+              required:
+                - author_user_id
+                - post_id
+                - commentator_user_id
+                - rating
+                - rating_status
+                - created_at
+               
+            'examples':
+              request:
+                value:
+                  author_user_id: "b6f641de-0067-4c74-a78a-8b03171aeaca"
+                  post_id: "1ceae90a-fb91-43c1-90a0-246638c2dbae"
+                  commentator_user_id: "a3de7b75-185f-4912-a40c-19b8ae443c99"
+                  rating: 5
+                  rating_status: "new"
+                  created_at: "2024-05-21T13:09:12Z"
+                  
+      'responses':
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rating_id:
+                    type: string
+                    format: UUID
+                    description: id созданной оценки (UUID)
+                required:
+                  - rating_id
+              examples:
+                response:
+                  value:
+                    rating_id: "6b179778-439d-4415-ba1c-fdd114c3c38a"
+        '404':
+          description: Автор с указанным идентификатором не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  - parameter
+              examples:
+                response:
+                  value:
+                    message: "Автор с указанным идентификатором не найден"
+                    parametr: "author_user_id"
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  - parameter
+              examples:
+                response:
+                  value:
+                    message: "Превышен лимит оценки постов 500"
+                    parametr: "rating"
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                required:
+                  - message
+
+              examples:
+                response:
+                  value:
+                    message: "Внутренняя ошибка сервера" 
+  
+  
+  '/v1/ratings':
+    get:
+      operationId: ListRatings
+      description:  |
+      tags:
+        - Управление оценками
+      summary: Возвращает список оценок по заданным фильтрам.
+      parameters:
+        - name: author_user_id
+          in: query
+          description: Фильтр для поиска оценок по id авторов поста
+          required: false
+          schema:
+            type: string
+            format: uuid
+          example: b6f641de-0067-4c74-a78a-8b03171aeaca
+          
+        - name: post_id
+          in: query
+          description: Фильтр для поиска оценок по id постов
+          required: false
+          schema:
+            type: string
+            format: uuid
+          example: 712d9b72-cd1a-42f0-bb7f-e319cde98849
+        
+        - name: commentator_user_id
+          in: query
+          description: Фильтр для поиска оценок по id комментаторов постов
+          required: false
+          schema:
+            type: string
+            format: uuid
+            example: 712d9b72-cd1a-42f0-bb7f-e319cde98849    
+          
+        - name: ratingt
+          in: query
+          description: Фильтрация постов по оценке
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+              enum:
+                - 1
+                - 2
+                - 3
+                - 4
+                - 5
+          
+        - name: ratingt_status
+          in: query
+          description: Фильтрация по статусам оценок
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - viewed
+                - read
+                
+        - name: limit
+          in: query
+          description: Максимальное количество записей, которое нужно получить в ответе
+          required: true
+          schema:
+            type: integer
+            default: 10
+            example: 100
+            
+        - name: page
+          in: query
+          description: Номер страницы пагинации. Опциональный параметр. По умолчанию 1.
+          schema:
+            type: integer
+            format: int32
+            default: 1
+            minimum: 1
+        
+      
+      'responses':
+        '200':
+          description: Список оценок успешно получен
+          content:
+            application/json:
+              schema:
+                   $ref: '#/components/schemas/GetRatingsView'
+              
+        '404':
+          description: Автор с указанным идентификатором не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  - parameter
+              examples:
+                response:
+                  value:
+                    message: "Автор с указанным идентификатором не найден"
+                    parametr: "author_user_id"
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  - parameter
+              examples:
+                response:
+                  value:
+                    message: "Некорректный id поста в запросе "
+                    parametr: "post_id"
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                required:
+                  - message
+
+              examples:
+                response:
+                  value:
+                    message: "Внутренняя ошибка сервера"
+  
+  
+  
+  
+  
+  '/v1/subscription':
+    post:
+      summary: Подписка на одного пользователя
+      operationId: CreateSubscribtion
+      description:  |
+        Пользователь может подписывать не более чем на `500` других пользователей в день
+        
+      tags:
+        -  Управление подписками/отписками
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+      
+              type: object
+              'properties':
+                user_id:
+                  type: string
+                  format: UUID
+                  description: id пользователя, на которого подписываются (UUID)
+                subscriber_user_id:
+                  type: string
+                  format: UUID
+                  description: id подписчика, который подписывается на другого пользователя (UUID) 
+                is_subscription:
+                  type: boolean
+                  description: true - подписка false - отписка
+                created_at:  
+                  type: string
+                  format: date-time
+                  description: Дата и время создания подписки/отписки
+                  
+              required:
+                - user_id
+                - subscriber_user_id
+                - is_subscription
+                - created_at
+               
+            'examples':
+              request:
+                value:
+                  user_id: "b6f641de-0067-4c74-a78a-8b03171aeaca"
+                  subscriber_user_id: "1ceae90a-fb91-43c1-90a0-246638c2dbae"
+                  is_subscription: true
+                  created_at: "2024-05-21T13:09:12Z"
+                  
+      'responses':
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscription_id:
+                    type: string
+                    format: UUID
+                    description: id созданной подписки/отписки (UUID)
+                required:
+                  - rating_id
+              examples:
+                response:
+                  value:
+                   subscription_id: "6b179778-439d-4415-ba1c-fdd114c3c38a"
+        '404':
+          description: Пользователь с указанным идентификатором не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  - parameter
+              examples:
+                response:
+                  value:
+                    message: "Пользователь с указанным идентификатором не найден"
+                    parametr: "user_id"
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  
+              examples:
+                response:
+                  value:
+                    message: "Превышен лимит подписки на пользователей 500"
+                   
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                required:
+                  - message
+
+              examples:
+                response:
+                  value:
+                    message: "Внутренняя ошибка сервера" 
+  
+  
+  '/v1/subscriptions':
+    get:
+      operationId: ListSubscriptions
+      description:  |
+      tags:
+        - Управление подписками/отписками
+      summary: Возвращает список подписок по заданным фильтрам
+      parameters:
+        - name: user_id
+          in: query
+          description: Фильтр для поиска всех подписок на определенного пользователя
+          required: false
+          schema:
+            type: string
+            format: uuid
+            example: b6f641de-0067-4c74-a78a-8b03171aeaca
+          
+        - name: is_subscription
+          in: query
+          description: Фильтрация подписок по статусам подписка/отписка
+          style: form
+          explode: false
+          schema:
+            type: boolean
+            items:
+              type: string
+              enum:
+                - true
+                - false
+                
+        - name: limit
+          in: query
+          description: Максимальное количество записей, которое нужно получить в ответе
+          required: true
+          schema:
+            type: integer
+            default: 10
+            example: 100
+            
+        - name: page
+          in: query
+          description: Номер страницы пагинации. Опциональный параметр. По умолчанию 1.
+          schema:
+            type: integer
+            format: int32
+            default: 1
+            minimum: 1
+        
+      
+      'responses':
+        '200':
+          description: Список подписок/отписок успешно получен
+          content:
+            application/json:
+              schema:
+                   $ref: '#/components/schemas/GetSubscriptionView'
+              
+        '404':
+          description: Пользователь с указанным идентификатором не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  - parameter
+              examples:
+                response:
+                  value:
+                    message: "Пользователь с указанным идентификатором не найден"
+                    parametr: "user_id"
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                  parameter:
+                    type: string
+                    description: Параметр вызвавший ошибку
+                required:
+                  - message
+                  - parameter
+              examples:
+                response:
+                  value:
+                    message: "Некорректный id пользователя в запросе "
+                    parametr: "user_id"
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Описание ошибки
+                required:
+                  - message
+
+              examples:
+                response:
+                  value:
+                    message: "Внутренняя ошибка сервера"  
+  
+  
+  
+'components':
+  schemas:
+    'Posts':
+      description: Список постов согласно параметрам запроса
+      required:
+        - author_user_id
+        - post_id
+        - title
+        - comment
+        - city
+        - country
+        - created_at
+      type: object
+      properties:
+        author_user_id:
+          type: string
+          format: UUID
+          description: id автора поста (UUID)
+          example: b6f641de-0067-4c74-a78a-8b03171aeaca
+        post_id:
+            type: string
+            format: UUID
+            description: id поста, в который загружаются фото (UUID)
+            example: 32104a52-5e97-49f3-a44f-49f8700ed5b8
+        title:
+          type: string
+          description: Название поста (заголовок). Максимум `100` символов  
+          example: Первый день в Карелии
+        comment:
+          type: string
+          description: Комментарий/описание к посту. Описание не должно превышать `250` символов.
+          example: Посетил горный массив Воттоваара. Подъём на священную саамскую гору требует хорошей физической подготовки, но открывающиеся виды компенсируют усилия
+        city:
+          type: string
+          description: Значение города из справочника "city"
+          enum:
+              - Лахденпохья
+              - Москва
+              - Минск
+              - Самара
+              - Астана
+        country:
+          type: string
+          description: Значение города из справочника "country"
+          enum:
+              - Россия
+              - Казахстан
+              - Киргизия
+              - Таджикистан
+              - Беларусь
+        hashtag:
+            type: array
+            items:
+              type: string
+              description: Список хештегов
+              example: '#Карелия' 
+        link_1_photo:
+            type: string
+            description: URL изображения 
+            example: "https://tosi-bosi-bucket.s3c2.001.cloud.ru"
+        link_2_photo:
+            type: string
+            description: URL изображения 
+            example: "https://tosi-bosi-bucket.s3c2.002.cloud.ru"
+        link_3_photo:
+            type: string
+            description: URL изображения 
+            example: "https://tosi-bosi-bucket.s3c2.003.cloud.ru"
+        link_4_photo:
+            type: string
+            description: URL изображения
+            example: "https://tosi-bosi-bucket.s3c2.004.cloud.ru"
+        link_5_photo:
+            type: string
+            description: URL изображения
+            example: "https://tosi-bosi-bucket.s3c2.005.cloud.ru"
+        link_6_photo:
+            type: string
+            description: URL изображения
+            example: "https://tosi-bosi-bucket.s3c2.006.cloud.ru"
+        created_at:  
+              type: string
+              format: date-time
+              description: Дата и время создания поста
+              example: 2024-05-21T13:09:12Z
+    'GetPostsView':
+      required:
+        - author_user_id
+        - title
+        - comment
+        - city
+        - country
+        - created_a
+      type: object
+      properties:
+        posts:
+          type: array
+          description: Список постов
+          items:
+            $ref: '#/components/schemas/Posts'
+  
+ 
+ 
+    'Comments':
+      description: Список комментариев согласно параметрам запроса
+      required:
+        - author_user_id
+        - post_id
+        - commentator_user_id
+        - comment_status
+        - status
+        - created_at
+      
+      type: object
+      properties:
+        author_user_id:
+          type: string
+          format: UUID
+          description: id автора поста (UUID)
+          example: b6f641de-0067-4c74-a78a-8b03171aeaca
+        post_id:
+            type: string
+            format: UUID
+            description: id поста ()UUID)
+            example: 32104a52-5e97-49f3-a44f-49f8700ed5b8
+        commentator_user_id:
+            type: string
+            format: UUID
+            description: id поста ()UUID)
+            example: 8ba8c124-d524-41ea-b967-24573c63104d
+        comment:
+          type: string
+          description: Комментарий/описание к посту. Описание не должно превышать `250` символов.
+          example: Весьма атмосферно. Ваше путешествие меня вдохновляет
+        comment_status:
+          type: string
+          description: Значение статуса комментария из справочника "comment_statuses"
+          enum:
+            - new
+            - viewed
+        created_at:  
+              type: string
+              format: date-time
+              description: Дата и время создания комментария к посту
+              example: 2024-05-21T13:09:12Z
+    
+    'GetCommentsView':
+      required:
+        - author_user_id
+        - post_id
+        - commentator_user_id
+        - comment
+        - comment_status
+        - created_a
+      type: object
+      properties:
+        comments:
+          type: array
+          description: Список комментариев
+          items:
+            $ref: '#/components/schemas/Comments'
+ 
+ 
+ 
+    'Ritings':
+      description: Список оценок согласно параметрам запроса
+      required:
+        - author_user_id
+        - post_id
+        - commentator_user_id
+        - rating
+        - rating_status
+        - created_at
+      
+      type: object
+      properties:
+        author_user_id:
+          type: string
+          format: UUID
+          description: id автора поста (UUID)
+          example: b6f641de-0067-4c74-a78a-8b03171aeaca
+        post_id:
+            type: string
+            format: UUID
+            description: id поста ()UUID)
+            example: 32104a52-5e97-49f3-a44f-49f8700ed5b8
+        commentator_user_id:
+            type: string
+            format: UUID
+            description: id поста ()UUID)
+            example: 8ba8c124-d524-41ea-b967-24573c63104d
+        rating:
+            type: integer
+            description: Оценка поста
+            minLength: 1
+            maxLength: 5
+            example: 5
+        rating_status:
+            type: string
+            description: Значение статуса комментария из справочника "rating_statuses"
+            enum:
+              - new
+              - viewed
+        
+        created_at:  
+              type: string
+              format: date-time
+              description: Дата и время создания оценки поста
+              example: 2024-05-21T13:09:12Z
+    
+    'GetRatingsView':
+      required:
+        - author_user_id
+        - post_id
+        - commentator_user_id
+        - rating
+        - rating_status
+        - created_a
+      type: object
+      properties:
+        ratings:
+          type: array
+          description: Список оценок
+          items:
+            $ref: '#/components/schemas/Ritings'
+ 
+ 
+ 
+    'Subscriptions':
+      description: Список подписок согласно параметрам запроса
+      required:
+         - user_id
+         - subscriber_user_id
+         - is_subscription
+         - created_at
+      
+      type: object
+      properties:
+        user_id:
+            type: string
+            format: UUID
+            description: id пользователя, на которого подписываются (UUID)
+        subscriber_user_id:
+            type: string
+            format: UUID
+            description: id подписчика, который подписывается на другого пользователя (UUID) 
+        is_subscription:
+            type: boolean
+            description: true - подписка false - отписка
+        created_at:  
+            type: string
+            format: date-time
+            description: Дата и время создания подписки/отписки
+      
+    'GetSubscriptionView':
+      required:
+         - user_id
+         - subscriber_user_id
+         - is_subscription
+         - created_at
+      type: object
+      properties:
+        subscriptions:
+          type: array
+          description: Список подписок
+          items:
+            $ref: '#/components/schemas/Subscriptions'
+  
+ 
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer 
+      bearerFormat: JWT  # optional, for documentation purposes only
+security:
+  - bearerAuth: []  
+   
+
+ 
+ 
+ 
+ 
+ 
+
+          
+
+          
+          
