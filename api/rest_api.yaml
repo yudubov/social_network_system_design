@@ -20,7 +20,7 @@ tags:
   - name: Управление подписками/отписками
 
 paths:
-  '/v1/post':
+  '/v1/posts':
     post:
       summary: Создание одного поста
       operationId: СreatePost
@@ -35,30 +35,27 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-      
               type: object
-              'properties':
-                author_user_id:
-                  type: string
-                  format: UUID
-                  description: id автора поста (UUID)
+              properties:
                 title:
                   type: string
-                  description: Название поста (заголовок). Максимум `100` символов  
+                  description: Заголовок поста. Заголовок не должен превышать `100` символов.
+                  example: "Перывый день в Карелии"
+                
                 comment:
                   type: string
                   description: Комментарий/описание к посту. Описание не должно превышать `250` символов.
-                city:
+                
+                images:
+                  type: array
+                  items:
                     type: string
-                    description: Значение города из справочника "city"
-                    enum:
-                        - Лахденпохья
-                        - Москва
-                        - Минск
-                        - Самара
-                        - Астана
+                    format: binary
+                  description: Максимальное количество фото - `6` фото, максимальный размер одного фото `500` КБ
+                  maxItems: 6
+                
                 country:
                     type: string
                     description: Значение города из справочника "country"
@@ -68,34 +65,21 @@ paths:
                         - Киргизия
                         - Таджикистан
                         - Беларусь
-                hashtag:
-                  type: array
-                  items:
+                city:
                     type: string
-                    description: Список хештегов
-                created_at:  
-                  type: string
-                  format: date-time
-                  description: Дата и время создания поста
+                    description: Значение города из справочника "city"
+                    enum:
+                        - Лахденпохья
+                        - Москва
+                        - Минск
+                        - Самара
+                        - Астана  
               
               required:
                 - author_user_id
                 - title
-                - comment
                 - city
                 - country
-                - created_at
-               
-            'examples':
-              request:
-                value:
-                  author_user_id: "b6f641de-0067-4c74-a78a-8b03171aeaca"
-                  title: "Первый день в Карелии"
-                  comment: "Посетил горный массив Воттоваара. Подъём на священную саамскую гору требует хорошей физической подготовки, но открывающиеся виды компенсируют усилия"
-                  city: "Лахденпохья"
-                  country_id: "Россия"
-                  hashtag: ["#Карелия", "#Воттоваара"]
-                  created_at: "2024-05-21T13:09:12Z"
                   
       'responses':
         '200':
@@ -176,7 +160,7 @@ paths:
                     message: "Внутренняя ошибка сервера"
                   
                    
-  '/v1/upload/photos':
+  '/v1/photos':
      post:
       summary: Загрузка фотографий в пост пользователя
       operationId: UploadPhotos
@@ -474,7 +458,7 @@ paths:
   
   
   
-  '/v1/comment':
+  '/v1/comments':
     post:
       summary: Создание одного комментария к посту
       operationId: CreateComment
@@ -756,7 +740,7 @@ paths:
   
   
   
-  '/v1/rating':
+  '/v1/ratings':
     post:
       summary: Оценка одного поста
       operationId: CreateRating
@@ -1052,7 +1036,7 @@ paths:
   
   
   
-  '/v1/subscription':
+  '/v1/subscriptions':
     post:
       summary: Подписка на одного пользователя
       operationId: CreateSubscribtion
@@ -1584,4 +1568,5 @@ security:
           
 
           
+
           
