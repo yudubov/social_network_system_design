@@ -26,12 +26,7 @@ Table posts {
   city string [not null]
   country string [not null]
   hashtag  JSON [not null]
-  link_1_photo string [not null]
-  link_2_photo string 
-  link_3_photo string 
-  link_4_photo string 
-  link_5_photo string 
-  link_6_photo string 
+  photo_links array [not null]
   created_at timestamp [not null]
 }
 
@@ -44,16 +39,9 @@ Table comments {
   created_at timestamp [not null]
 }
 
-Table post_photos {
-  post_id UUID [not null]
-  url string [not null, note: "ссылка на фото в S3 бакете"]
-  created_at timestamp [not null]
-}
-
 Table subscriptions {
   user_id UUID [not null]
   subscriber_user_id UUID [not null]
-  is_subscription bool [not null]
   created_at timestamp [not null]
 }
 
@@ -65,3 +53,4 @@ Ref: comments.commentator_user_id > users.user_id
 
 Ref: comments.post_id > posts.post_id
 Ref: post_photos.post_id > posts.post_id
+
