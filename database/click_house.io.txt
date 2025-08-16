@@ -1,0 +1,56 @@
+// СlickHouse синхронизируется и дублирует данные из PostgreSQL 
+// для сложный аналитических запросов
+// Первичные ключи и отношения, указанные здесь, 
+// не накладываются через ограничения 
+// и чисто указывают на то, как данные связаны 
+// и какие уникальные ключи имеются.
+// https://clickhouse.com/docs/ru/data-modeling/schema-design 
+
+
+Table users {
+  user_id UUID [primary key]
+  is_popular_blogger Bool [not null]
+  name string [not null]
+  email string [not null]
+  phone string [not null]
+  city string [not null]
+  country string [not null]
+  created_at timestamp [not null]
+}
+
+Table posts {
+  post_id UUID [primary key]
+  author_user_id UUID [not null]
+  title string [not null]
+  comment string [not null]
+  city string [not null]
+  country string [not null]
+  hashtag  JSON [not null]
+  photo_links array [not null]
+  created_at timestamp [not null]
+}
+
+Table comments {
+  comment_id UUID [primary key]
+  commentator_user_id UUID [not null]
+  post_id UUID [not null ]
+  comment string [not null]
+  comment_status bool [not null]
+  created_at timestamp [not null]
+}
+
+Table subscriptions {
+  user_id UUID [not null]
+  subscriber_user_id UUID [not null]
+  created_at timestamp [not null]
+}
+
+Ref: users.user_id < subscriptions.user_id
+Ref: users.user_id < subscriptions.subscriber_user_id
+
+Ref: posts.author_user_id > users.user_id
+Ref: comments.commentator_user_id > users.user_id
+
+Ref: comments.post_id > posts.post_id
+Ref: post_photos.post_id > posts.post_id
+

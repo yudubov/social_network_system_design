@@ -1,0 +1,70 @@
+// Elasticsearch синхронизируется и дублирует данные из PostgreSQL 
+// для полнотекстового поиска
+// Промежуточный сервис определяет тип запроса (точный по id записи или текстовый) 
+// и направляет его в PostgreSQL или Elasticsearch
+// если текстовый запрос 
+// -> Elasticsearch находит максимально подходящие записи по релевантности
+// -> направляет id записей в PostgreSQL 
+// -> PostgreSQL формирует набор записей для ответа по релевантнсотси 
+
+Table users_index {
+  _index text [not null] 
+  _id text [not null]
+  user_id text [not null]
+  is_popular_blogger boolean [not null]
+  name text [not null]
+  email text [not null]
+  phone text [not null]
+  city text [not null]
+  country text [not null]
+  created_at text [not null]
+}
+
+Table posts_index {
+  _index text [not null] 
+  _id text [not null]
+  post_id text [not null]
+  author_user_id text [not null]
+  title text [not null]
+  comment text [not null]
+  city text [not null]
+  country text [not null]
+  hashtag  text [not null]
+  link_1_photo text [not null]
+  link_2_photo text 
+  link_3_photo text 
+  link_4_photo text 
+  link_5_photo text 
+  link_6_photo text 
+  created_at text [not null]
+}
+
+Table comments_index {
+  _index text [not null] 
+  _id text [not null]  
+  comment_id text [primary key]
+  commentator_user_id text [not null]
+  post_id text [not null ]
+  comment text [not null]
+  comment_status bool [not null]
+  created_at text [not null]
+}
+
+Table post_photos_index {
+  _index text [not null] 
+  _id text [not null]  
+  post_id text [not null]
+  url text [not null, note: "ссылка на фото в S3 бакете"]
+  created_at text [not null]
+}
+
+Table subscriptions_index {
+  _index text [not null] 
+  _id text [not null]  
+  user_id text [not null]
+  subscriber_user_id text [not null]
+  is_subscription boolean [not null]
+  created_at text [not null]
+}
+
+
