@@ -1,0 +1,10 @@
+Table objects_storage {
+  id UUID [not null]
+  bucket string [not null, note: 'Название бакета']
+  post_id UUID [not null]
+  name string [not null, note: 'Название фото']
+  type string [not null, note: 'jpeg']
+  size string [not null, note: 'Размер фото в KB']
+  url string [not null, note: 'Ссылка для скачивания фото']
+  сreated_at timestamp [not null] 
+}

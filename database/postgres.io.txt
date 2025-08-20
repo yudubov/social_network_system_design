@@ -1,0 +1,59 @@
+Table users {
+  user_id UUID [primary key]
+  is_popular_blogger boolean [not null]
+  name varchar [not null]
+  email varchar [not null, unique]
+  phone varchar [not null, unique]
+  city varchar [not null]
+  country varchar [not null]
+  created_at timestamp [not null]
+
+}
+
+Table subscriptions {
+  user_id UUID [not null]
+  subscriber_user_id UUID [not null]
+  is_subscription boolean [not null]
+  created_at timestamp [not null]
+}
+
+Table posts {
+  post_id UUID [primary key]
+  author_user_id UUID [not null]
+  title varchar [not null]
+  comment text [not null]
+  city varchar [not null]
+  country varchar [not null]
+  hashtag  JSONB [not null]
+  link_1_photo text 
+  link_2_photo text 
+  link_3_photo text 
+  link_4_photo text 
+  link_5_photo text 
+  link_6_photo text 
+  created_at timestamp [not null]
+}
+
+Table comments {
+  comment_id UUID [primary key]
+  post_id UUID [not null ]
+  commentator_user_id UUID [not null]
+  comment text [not null]
+  comment_status boolean [not null]
+  created_at timestamp [not null]
+}
+
+Table post_photos {
+  post_id UUID [not null]
+  url varchar [not null, note: "ссылка на фото в S3 бакете"]
+  created_at timestamp [not null]
+}
+
+Ref: users.user_id < subscriptions.user_id
+Ref: users.user_id < subscriptions.subscriber_user_id
+
+Ref: posts.author_user_id > users.user_id
+Ref: comments.commentator_user_id > users.user_id
+
+Ref: comments.post_id > posts.post_id
+Ref: post_photos.post_id > posts.post_id
