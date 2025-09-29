@@ -226,7 +226,7 @@ RPS – read = 10 000 000 * 2 / 100 000 = 200
 ### Traffic посты 
 100 RPS весом:
 Метаданные - 1 КБ
-Traffic – write meta = 100 * 3 = 300 КБ/c
+Traffic – write meta = 100 * 1 = 100 КБ/c
 
 Медиафайлы - 3 Мб
 Traffic – write media = 100 * 3 = 300 Мб/c
